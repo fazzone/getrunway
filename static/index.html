@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/gmaps.js"></script>
+    <script src="/static/app.js"></script>
+    <link rel="stylesheet" href="/static/water.dark.min.css">
+    <link rel="stylesheet" href="/static/app.css">
+    <title>Getrunway.py</title>
+  </head>
+  <body>
+    <div class="app">
+      <div class="sidebar-left">
+
+	<fieldset id="map-options">
+	  <legend>Map Options</legend>
+	  <label for="mapTypeId">Map Type</label>
+	  <select name="mapTypeId" id="select-map-type">
+	    <option value="hybrid">Hybrid</option>
+	    <option value="satellite">Satellite</option>
+	    <option value="roadmap">Road map</option>
+	  </select>
+	</fieldset>
+
+	<form class="sidebar">
+	  <fieldset>
+            <legend>Defaults</legend>
+
+            <label for="view">View</label>
+            <input name="view" id="inp_view" placeholder="Standard">
+
+	    
+	  </fieldset>
+	  <fieldset id="field-info">
+	    <legend>Field information</legend>
+            <label for="name">Field name</label>
+	    <input name="name" id="input-field-name">
+
+            <label for="shortname">Short name</label>
+	    <input name="shortname">
+
+	    <input name="lat" data-type="float" placeholder="Latitude">
+	    <input name="long" data-type="float" placeholder="Longitude">
+	    <input class="place-marker" type="button" value="Choose location on map">
+
+	    <fieldset data-name="runway">
+	      <legend>Runway</legend>
+	      <input name="trueDir" data-type="float" placeholder="Heading">
+	      <input name="length" data-type="float" placeholder="Length (ft)">
+	      <input name="width" data-type="float" placeholder="Width (ft)">
+	    </fieldset>
+
+	  </fieldset>
+	  <input type="button" id="submit-fields-info" value="Submit">
+	</form>    
+      </div>
+      <div class="main-spacer"> </div>
+      <div class="map">
+	<div id="map-canvas" style="height: 90%"></div>
+      </div>
+    </div>
+  </body>
+</html> 

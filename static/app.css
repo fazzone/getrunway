@@ -1,0 +1,23 @@
+body {
+    margin: 0 !important
+}
+
+div.app {
+    height: 90vh;
+    width: 90vw;
+    display: flex;
+    margin-top: 4vh;
+    flex-direction: row;
+}
+
+div.sidebar-left {
+
+}
+
+div.main-spacer {
+    width: 10px;
+}
+
+div.map {
+    flex-grow: 1
+}
