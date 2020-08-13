@@ -4,14 +4,37 @@ body {
 
 div.app {
     height: 90vh;
-    width: 90vw;
-    display: flex;
+    width: 100vw;
+
     margin-top: 4vh;
+}
+
+.hflex {
+    display: flex;
     flex-direction: row;
 }
 
-div.sidebar-left {
+.vflex {
+    display: flex;
+    flex-direction: column;
+}
 
+#main {
+    flex-grow: 5;
+}
+
+#images-preview {
+    flex-grow: 1;
+}
+
+.field-image {
+    border: 1px solid;
+    margin: auto;
+}
+
+div.sidebar-left {
+    flex-grow: 1;
+    max-width: 22em;
 }
 
 div.main-spacer {
@@ -19,7 +42,7 @@ div.main-spacer {
 }
 
 div.map {
-    flex-grow: 1
+    flex-grow: 5
 }
 
 fieldset {

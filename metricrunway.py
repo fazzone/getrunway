@@ -168,13 +168,13 @@ def do_field(fld):
     iw = 0
     for width in sorted(crop_to_zoom):
       zz=crop_to_zoom[width]
-      print("zz, width, field_image_width_m", zz,width, field_image_width_m)
+      # print("zz, width, field_image_width_m", zz,width, field_image_width_m)
       if field_image_width_m <= width:
         zoom = crop_to_zoom[width]
         iw = width
-        print("zoom=", zoom)
-        print("imagewidth=", width)
-        print("field_image_width_m=", field_image_width_m)
+        #print("zoom=", zoom)
+        #print("imagewidth=", width)
+        #print("field_image_width_m=", field_image_width_m)
         break
 
     if zoom == 0:
@@ -188,7 +188,7 @@ def do_field(fld):
     if iPad:
       filename = "iPad_" + filename
 
-    print(field_name, filename, latitude, longitude, field_image_width_m, zoom)
+    # print(field_name, filename, latitude, longitude, field_image_width_m, zoom)
 
     # Russell stored intermediate reps in memory. We shall be lazy and store them
     # in temp files since it's easy to do that with the data from requests()

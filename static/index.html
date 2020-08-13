@@ -9,65 +9,72 @@
     <title>Getrunway.py</title>
   </head>
   <body>
-    <div class="app">
-      <div class="sidebar-left">
+    <div class="app vflex">
+      <div id="main" class="hflex">
+	<div class="sidebar-left">
 
-        <fieldset id="map-options">
-          <legend>Map Options</legend>
-          <label for="mapTypeId">Map Type</label>
-          <select name="mapTypeId" id="select-map-type">
-            <option value="hybrid">Hybrid</option>
-            <option value="satellite">Satellite</option>
-            <option value="roadmap">Road map</option>
-          </select>
-        </fieldset>
-
-        <form class="sidebar">
-          <fieldset>
-            <legend>Defaults</legend>
-
-            <label for="view">View</label>
-            <input name="view" id="inp_view" placeholder="Standard">
-
-            
+          <fieldset id="map-options">
+            <legend>Map Options</legend>
+            <label for="mapTypeId">Map Type</label>
+            <select name="mapTypeId" id="select-map-type">
+              <option value="hybrid">Hybrid</option>
+              <option value="satellite">Satellite</option>
+              <option value="roadmap">Road map</option>
+            </select>
           </fieldset>
-          <fieldset id="field-info">
-            <legend>Field information</legend>
-            <label for="name">Field name</label>
-            <input name="name" id="input-field-name">
 
-            <label for="shortname">Short name</label>
-            <input name="shortname">
+          <form class="sidebar">
+            <fieldset>
+              <legend>Defaults</legend>
 
-            <input name="lat" data-type="float" placeholder="Latitude">
-            <input name="long" data-type="float" placeholder="Longitude">
-            <input class="place-marker" type="button" value="Choose location on map">
+              <label for="view">View</label>
+              <input name="view" id="inp_view" placeholder="Standard">
 
-            <fieldset data-name="runway">
-              <legend>Runway</legend>
-              <input name="length" data-type="float" placeholder="Length (ft)">
-              <input name="width" data-type="float" placeholder="Wdith (ft)">
-	      <input name="x_offset" data-type="float" type="range"  min="-100" max="100" value="0" placeholder="X offset">
-	      <input name="y_offset" data-type="float" type="range" min="-100" max="100" value="0" placeholder="Y offset">
+              
             </fieldset>
+            <fieldset id="field-info">
+              <legend>Field information</legend>
+              <label for="name">Field name</label>
+              <input name="name" id="input-field-name">
 
-            <input name="triangle" data-type="float" placeholder="Triangle">
-	    <input name="elevation" data-type="float" placeholder="Elevation">
+              <label for="shortname">Short name</label>
+              <input name="shortname">
 
-            <input name="aimoff" data-type="float" placeholder="Aim offset">
+              <input name="lat" data-type="float" placeholder="Latitude">
+              <input name="long" data-type="float" placeholder="Longitude">
+              <input class="place-marker" type="button" value="Choose location on map">
 
-            <input name="startHeading" data-type="float" placeholder="Start heading">
-	    <input name="startMaxAltitude" data-type="float" placeholder="Start max altitude">
-            <input name="startMaxSpeed" data-type="float" placeholder="Start max speed">
-            <input name="maxAltitude" data-type="float" placeholder="Max altitude">
-            <input name="raceTime" data-type="float" placeholder="Race time">
-          </fieldset>
-          <input type="button" id="submit-fields-info" value="Submit">
-        </form>    
-      </div>
-      <div class="main-spacer"> </div>
-      <div class="map">
-        <div id="map-canvas" style="height: 90%"></div>
+              <fieldset data-name="runway">
+		<legend>Runway</legend>
+		<input name="length" data-type="float" placeholder="Length (ft)">
+		<input name="width" data-type="float" placeholder="Wdith (ft)">
+		<input name="x_offset" data-type="float" type="range"  min="-100" max="100" value="0" placeholder="X offset">
+		<input name="y_offset" data-type="float" type="range" min="-100" max="100" value="0" placeholder="Y offset">
+              </fieldset>
+
+              <input name="triangle" data-type="float" placeholder="Triangle">
+	      <input name="elevation" data-type="float" placeholder="Elevation">
+
+              <input name="aimoff" data-type="float" placeholder="Aim offset">
+
+              <input name="startHeading" data-type="float" placeholder="Start heading">
+	      <input name="startMaxAltitude" data-type="float" placeholder="Start max altitude">
+              <input name="startMaxSpeed" data-type="float" placeholder="Start max speed">
+              <input name="maxAltitude" data-type="float" placeholder="Max altitude">
+              <input name="raceTime" data-type="float" placeholder="Race time">
+            </fieldset>
+            <input type="button" id="preview-button" value="Preview">
+	    <input type="button" id="download-zip-button" value="Download zip">
+          </form>    
+	</div>
+	<div class="main-spacer"> </div>
+	<div class="map">
+          <div id="map-canvas" style="height: 90%"></div>
+	</div>
+	<div class="main-spacer"> </div>
+	<div id="images-preview" class="vflex">
+	  Images preview
+	</div>
       </div>
     </div>
   </body>
