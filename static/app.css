@@ -21,3 +21,7 @@ div.main-spacer {
 div.map {
     flex-grow: 1
 }
+
+fieldset {
+    margin: 10px;
+}

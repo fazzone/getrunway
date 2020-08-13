@@ -84,7 +84,6 @@ $(function() {
     });
 
     $('#submit-fields-info').click(function() {
-        console.log("What the fuck jquery");
         $.ajax({
             type: "POST",
             url: "/register",
