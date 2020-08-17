@@ -2,7 +2,9 @@
 <html>
   <head>
     <script src="/static/jquery.min.js"></script>
-    <script src="/static/gmaps.js"></script>
+
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC24saqgVy2IkTlXnrDnt-VNysJire_0lc&libraries=drawing" type="text/javascript"></script>
+
     <script src="/static/app.js"></script>
     <link rel="stylesheet" href="/static/water.dark.min.css">
     <link rel="stylesheet" href="/static/app.css">
@@ -51,6 +53,13 @@
 		<input name="x_offset" data-type="float" type="range"  min="-100" max="100" value="0" placeholder="X offset">
 		<input name="y_offset" data-type="float" type="range" min="-100" max="100" value="0" placeholder="Y offset">
               </fieldset>
+
+	      <fieldset id="noflyfs" data-name="nofly" data-type="repeated">
+		<legend>No-fly Zones</legend>
+		<div id="nofly-marker"></div>
+		<input type="button" id="add-nofly-circle-button" value="Add NoFly circle">
+		<input type="button" id="add-nofly-rect-button" value="Add NoFly rectangle">
+	      </fieldset>
 
               <input name="triangle" data-type="float" placeholder="Triangle">
 	      <input name="elevation" data-type="float" placeholder="Elevation">
