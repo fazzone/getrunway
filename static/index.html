@@ -3,7 +3,7 @@
   <head>
     <script src="/static/jquery.min.js"></script>
 
-      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC24saqgVy2IkTlXnrDnt-VNysJire_0lc&libraries=drawing" type="text/javascript"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC24saqgVy2IkTlXnrDnt-VNysJire_0lc&libraries=drawing" type="text/javascript"></script>
 
     <script src="/static/app.js"></script>
     <link rel="stylesheet" href="/static/water.dark.min.css">
@@ -13,7 +13,7 @@
   <body>
     <div class="app vflex">
       <div id="main" class="hflex">
-	<div class="sidebar-left">
+        <div class="sidebar-left">
 
           <fieldset id="map-options">
             <legend>Map Options</legend>
@@ -47,43 +47,47 @@
               <input class="place-marker" type="button" value="Choose location on map">
 
               <fieldset data-name="runway">
-		<legend>Runway</legend>
-		<input name="length" data-type="float" placeholder="Length (ft)">
-		<input name="width" data-type="float" placeholder="Wdith (ft)">
-		<input name="x_offset" data-type="float" type="range"  min="-100" max="100" value="0" placeholder="X offset">
-		<input name="y_offset" data-type="float" type="range" min="-100" max="100" value="0" placeholder="Y offset">
+                <legend>Runway</legend>
+                <input name="length" data-type="float" placeholder="Length (ft)">
+                <input name="width" data-type="float" placeholder="Wdith (ft)">
+                <input name="x_offset" data-type="float" type="range"  min="-100" max="100" value="0" placeholder="X offset">
+                <input name="y_offset" data-type="float" type="range" min="-100" max="100" value="0" placeholder="Y offset">
+              </fieldset>
+              <fieldset data-name="triangle">
+                <input type="button" id="place-triangle-button" value="Place triangle">
+                <div id="tri-control"></div>
               </fieldset>
 
-	      <fieldset id="noflyfs" data-name="nofly" data-type="repeated">
-		<legend>No-fly Zones</legend>
-		<div id="nofly-marker"></div>
-		<input type="button" id="add-nofly-circle-button" value="Add NoFly circle">
-		<input type="button" id="add-nofly-rect-button" value="Add NoFly rectangle">
-	      </fieldset>
+              <fieldset id="noflyfs" data-name="nofly" data-type="repeated">
+                <legend>No-fly Zones</legend>
+                <div id="nofly-marker"></div>
+                <input type="button" id="add-nofly-circle-button" value="Add NoFly circle">
+                <input type="button" id="add-nofly-rect-button" value="Add NoFly rectangle">
+              </fieldset>
 
               <input name="triangle" data-type="float" placeholder="Triangle">
-	      <input name="elevation" data-type="float" placeholder="Elevation">
+              <input name="elevation" data-type="float" placeholder="Elevation">
 
               <input name="aimoff" data-type="float" placeholder="Aim offset">
 
               <input name="startHeading" data-type="float" placeholder="Start heading">
-	      <input name="startMaxAltitude" data-type="float" placeholder="Start max altitude">
+              <input name="startMaxAltitude" data-type="float" placeholder="Start max altitude">
               <input name="startMaxSpeed" data-type="float" placeholder="Start max speed">
               <input name="maxAltitude" data-type="float" placeholder="Max altitude">
               <input name="raceTime" data-type="float" placeholder="Race time">
             </fieldset>
             <input type="button" id="preview-button" value="Preview">
-	    <input type="button" id="download-zip-button" value="Download zip">
+            <input type="button" id="download-zip-button" value="Download zip">
           </form>    
-	</div>
-	<div class="main-spacer"> </div>
-	<div class="map">
+        </div>
+        <div class="main-spacer"> </div>
+        <div class="map">
           <div id="map-canvas" style="height: 90%"></div>
-	</div>
-	<div class="main-spacer"> </div>
-	<div id="images-preview" class="vflex">
-	  Images preview
-	</div>
+        </div>
+        <div class="main-spacer"> </div>
+        <div id="images-preview" class="vflex">
+          Images preview
+        </div>
       </div>
     </div>
   </body>
