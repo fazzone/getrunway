@@ -29,21 +29,21 @@ import io
 # 12 : 288895.288400
 # 11 : 577790.576700
 # 10 : 1155581.153000
-# 9    : 2311162.307000
-# 8    : 4622324.614000
-# 7    : 9244649.227000
-# 6    : 18489298.450000
-# 5    : 36978596.910000
-# 4    : 73957193.820000
-# 3    : 147914387.600000
-# 2    : 295828775.300000
-# 1    : 591657550.500000
+# 9  : 2311162.307000
+# 8  : 4622324.614000
+# 7  : 9244649.227000
+# 6  : 18489298.450000
+# 5  : 36978596.910000
+# 4  : 73957193.820000
+# 3  : 147914387.600000
+# 2  : 295828775.300000
+# 1  : 591657550.500000
 
 
 def Gmaps_api_request(**kwargs):
 
   ret = requests.request("GET",
-                "https://maps.googleapis.com/maps/api/staticmap",
+              "https://maps.googleapis.com/maps/api/staticmap",
               stream=True,
               params=kwargs)
   if str(ret).strip() != "<Response [200]>":
@@ -52,16 +52,8 @@ def Gmaps_api_request(**kwargs):
   return ret
 
 def get_Gmaps_image(zoom, latitude, longitude):
-  # if os.name == "posix":
-  #   fd = open("/home/davidmcq/getrunway.conf", "r") # Linux
-  # elif os.name == "nt":
-  #   fd = open("getrunway.conf", "r")  # Windows
-  # else:
-  #   print("unknown os", os.name)
-  #   exit()
-  # api_key = fd.readline()
+
   api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-  # fd.close()
   latlong= str(latitude) + "," + str(longitude)
   with open("temp%d.png" % zoom, "wb") as file:
     file.write(Gmaps_api_request(
@@ -109,20 +101,6 @@ crop_to_zoom = {200:18, 400:17, 800:16, 1600:15, 3200:14, 6400:13}
 
 #crop_to_zoom = {300:18, 600:17, 1200:16, 2400:15, 4800:14, 9600:13}
 
-
-# if len(sys.argv) > 1:
-#   fieldFile = sys.argv[1] + ".jsn"
-# else:
-#   fieldFile = "TriFields.jsn"
-# print("Reading Field file ", fieldFile)
-# with open(fieldFile) as json_data:
-#   try:
-#     jd  = json.load(json_data)
-#   except ValueError as valmsg:
-#     print("JSON Decode error in " + fieldFile)
-#     print(valmsg)
-#     exit()
-
 # in case no default for images
 
   #defImages = jd.get("fields_defaults").get("images", [1000, 2000, 4000])
@@ -132,6 +110,10 @@ defImages = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
   
 # First loop over all the fields read from Fields.jsn
 
+# Required:
+# lat,long of field
+# startheading (aka trueDir)
+
 def do_field(fld):
 
   field_name=fld["name"]
@@ -140,7 +122,7 @@ def do_field(fld):
   View = fld.get("View", "Standard")
   latitude = fld["lat"]
   coslat = math.cos(math.radians(latitude))
-  longitude =   fld["long"]
+  longitude = fld["long"]
   trueDir = fld["startHeading"]
   runway_length_m = fld["runway"]["length"]
   runway_width_m =  fld["runway"]["width"]
@@ -168,7 +150,7 @@ def do_field(fld):
     iw = 0
     for width in sorted(crop_to_zoom):
       zz=crop_to_zoom[width]
-      # print("zz, width, field_image_width_m", zz,width, field_image_width_m)
+      #print("zz, width, field_image_width_m", zz,width, field_image_width_m)
       if field_image_width_m <= width:
         zoom = crop_to_zoom[width]
         iw = width
@@ -224,15 +206,14 @@ def do_field(fld):
           wwGr/2 + field_image_width_px / 2,
           hhGr/2 + field_image_height_px * botMult)
 
-
     Gmaps_rotate_crop = Gmaps_rotate.crop(clip_box)
 
     wwGrc, hhGrc = Gmaps_rotate_crop.size # note image size again...
 
-    runway_width_px      = runway_width_m    * Gmaps_px_per_meter(latitude, zoom)
+    runway_width_px    = runway_width_m    * Gmaps_px_per_meter(latitude, zoom)
     runway_length_px   = runway_length_m   * Gmaps_px_per_meter(latitude, zoom)
     runway_x_offset_px = runway_x_offset_m * Gmaps_px_per_meter(latitude, zoom)
-    runway_y_offset_px = runway_y_offset_m * Gmaps_px_per_meter(latitude, zoom)     
+    runway_y_offset_px = runway_y_offset_m * Gmaps_px_per_meter(latitude, zoom)   
     
     # now produce the transmitter-sized image
 
@@ -258,12 +239,12 @@ def do_field(fld):
     runway_y_offset_px = runway_y_offset_px * hhj/hhGrc     
 
     # draw the yellow rectangle for the runway to confirm registration
-    # print("runway_length_px, runway_x_offset_px: ", runway_length_px, runway_x_offset_px)
-    dd.rectangle( ((int(wwj/2 - runway_length_px/2 + runway_x_offset_px),
-            int(hhj * topMult - runway_width_px/2 + runway_y_offset_px) ),
-             (int(wwj/2 + runway_length_px/2 + runway_x_offset_px),
-            int(hhj * topMult + runway_width_px/2 + runway_y_offset_px) )),
-            outline='yellow')
+    # print("runway_length_px, runway_x_offset_px: ", runway_length_px, runway_x_offset_px)      # remove runway drawing on map for now
+    #dd.rectangle( ((int(wwj/2 - runway_length_px/2 + runway_x_offset_px),
+    #       int(hhj * topMult - runway_width_px/2 + runway_y_offset_px) ),
+    #        (int(wwj/2 + runway_length_px/2 + runway_x_offset_px),
+    #       int(hhj * topMult + runway_width_px/2 + runway_y_offset_px) )),
+    #       outline='yellow')
 
     NoFly = fld.get("NoFly")
     if NoFly:

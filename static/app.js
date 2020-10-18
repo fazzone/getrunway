@@ -323,7 +323,7 @@ function create_triangle() {
         .append($('<input name="bc_long" data-type="float" placeholder="Base center longitude">').change(from_text))
         .append($('<input name="h_extent" data-type="float" placeholder="Horizontal extent (meters)">').change(from_text))
         .append($('<input name="v_extent" data-type="float" placeholder="Vertical extent (meters)">').change(from_text))
-        .append($('<input type="range" name="rotation" data-type="float" placeholder="Rotation (degrees)" min="0" value="0" max="360">').change(from_text))
+        .append($('<input type="range" name="rotation" data-type="float" placeholder="Rotation (degrees)" min="0" value="0" max="360">').on('input', from_text))
         .append($('<input type="button" value="Remove">').click(remove_tri));
 }
 

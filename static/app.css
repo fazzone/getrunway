@@ -5,13 +5,13 @@ body {
 div.app {
     height: 90vh;
     width: 100vw;
-
     margin-top: 4vh;
 }
 
 .hflex {
     display: flex;
     flex-direction: row;
+    height: 100%;
 }
 
 .vflex {
