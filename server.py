@@ -1,4 +1,4 @@
-import weakref
+import functools
 import uuid
 import io
 import sys
@@ -34,7 +34,6 @@ def make_hashable(o):
     return o
 
 images_cache = {}
-# weakref.WeakValueDictionary()
 def get_images(reference):
     global images_cache
     global registered_fields
@@ -68,6 +67,11 @@ def go():
     return jsonify({'registered': str(k),
                     'images': list(images.keys())})
 
+@app.route('/fancy/<image_width_m_str>', methods=['POST'])
+def image_xhr(image_width_m_str):
+    buf = io.BytesIO(do_field(request.json, int(image_width_m_str)))
+    buf.seek(0)
+    return send_file(buf, mimetype = "image/png")
 
 @app.route('/image/<uuid>/<img>', methods=['GET'])
 def send_image(uuid, img):

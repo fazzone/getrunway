@@ -46,24 +46,24 @@ def Gmaps_api_request(**kwargs):
               "https://maps.googleapis.com/maps/api/staticmap",
               stream=True,
               params=kwargs)
-  if str(ret).strip() != "<Response [200]>":
+  if ret.status_code != 200:
     print("Google maps error (bad API key?): ", ret)
     exit()
-  return ret
+  return ret.content
 
 def get_Gmaps_image(zoom, latitude, longitude):
-
   api_key = os.getenv("GOOGLE_MAPS_API_KEY")
   latlong= str(latitude) + "," + str(longitude)
-  with open("temp%d.png" % zoom, "wb") as file:
-    file.write(Gmaps_api_request(
+  img_buf = io.BytesIO(
+    Gmaps_api_request(
       center=latlong,
       zoom="%d" % zoom,
       size=imageSize,
       maptype="satellite",
       key=api_key
-    ).content)
-  return Image.open("temp%d.png" % zoom).convert("RGB")
+    ))
+  img_buf.seek(0)
+  return Image.open(img_buf).convert("RGB")
 
 def Gmaps_meters_per_px(lat, zoom): # 156... constant from Google
   return 156543.03392 * math.cos(math.radians(lat)) / math.pow(2,zoom)
@@ -81,7 +81,8 @@ rE = 6371000  # 6371*1000 radius of earth in meters, approx
 #print ("Takes two command line args. First is Fields filename, second creates iPad images")
 #print ("Give two commandline args to generate iPad images")
 
-if len(sys.argv) > 2:
+# if len(sys.argv) > 2:
+if False:
   iPad = True
   imageSize = "2048x2048"
   imageOut = (2048, 1024)
@@ -114,7 +115,7 @@ defImages = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
 # lat,long of field
 # startheading (aka trueDir)
 
-def do_field(fld):
+def do_field(fld, field_image_width_m):
 
   field_name=fld["name"]
   short_name=fld["shortname"]
@@ -135,9 +136,9 @@ def do_field(fld):
     fld["images"] = defImages
   
   images_map = {}
-  for im_index in range(len(fld["images"])): 
-
-    field_image_width_m  = fld["images"][im_index]
+# for im_index in range(len(fld["images"])):
+  if True:
+    # field_image_width_m  = fld["images"][im_index]
     field_image_height_m = field_image_width_m/2
     filename = short_name + "_Tri_" + str(field_image_width_m) + "_m.png"
     #print("Constructed Filename: ", filename)
@@ -286,10 +287,11 @@ def do_field(fld):
         
         dd.ellipse([xr - rp, yr - rp, xr + rp, yr + rp], outline=color, width=1)
 
-    bio = io.BytesIO()  
+    bio = io.BytesIO()
     Jeti.save(bio, "PNG")
-    images_map[filename] = bio.getvalue()
-  return images_map    
+    return bio.getvalue()
+  #   images_map[filename] = bio.getvalue()
+  # return images_map    
 
 print(" ")
 print("Don't forget to copy the updated Fields.jsn file along with the PNGs !!!")

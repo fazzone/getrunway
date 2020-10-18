@@ -343,29 +343,75 @@ $(function() {
     });
 
     $('#preview-button').click(function() {
-        $.ajax({
-            type: "POST",
-            url: "/register",
-            data: JSON.stringify(fieldsetJSON({}, $('#field-info'))),
-            dataType: 'json',
-            contentType: "application/json; charset=utf-8",
-            success: function(resp) {
-                // window.location.replace('/generate/' + resp.registered);
-                $preview = $("#images-preview");
-                $preview.empty();
-                for (img of resp.images) {
-                    console.log(img);
-                    $preview.prepend(
-                        $('<div class="field-image">')
-                            .append($("<div>")
-                                    .append(img)
-                                    .add($("<img>", {
-                                        src: "/image/" + resp.registered + "/" + img
-                                    }))));
-                }
-            }
-        });
+        for (_size of [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]) {
+            (function(size) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/fancy/" + size, true);
+                xhr.responseType = "arraybuffer";
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.onload = function(e) {
+                    console.log("Begin load", size);
+                    var arrayBufferView = new Uint8Array(this.response);
+                    var blob = new Blob([arrayBufferView], {type: "image/png"});
+                    var urlCreator = window.URL || window.webkitURL;
+                    var imageUrl = urlCreator.createObjectURL(blob);
+
+                    let $el = $('<div class="field-image vflex">')
+                        .data('size', size)
+                        .append($("<div>", {style: "margin: auto;"})
+                                .append(size + " meters"))
+                        .append($('<img>', {src: imageUrl}))
+
+                    var inserted = false;
+                    $("#images-preview")
+                        .children()
+                        .each(function () {
+                            let ch_size = parseInt($(this).data('size'));
+                            console.log("Compare ", ch_size, size);
+                            if (ch_size == size) {
+                                $(this).replaceWith($el);
+                            }
+                            else if (!inserted && ch_size > size) {
+                                inserted = true;
+                                $(this).before($el);
+                            }
+                        });
+                    console.log("First insert", size);
+                    if (!inserted)
+                        $("#images-preview").append($el);
+                    console.log("End load", size);
+                };
+
+                xhr.send(JSON.stringify(fieldsetJSON({}, $('#field-info'))));
+            })(_size);
+        }
     });
+
+
+    // $('#preview-button').click(function() {
+    //     $.ajax({
+    //         type: "POST",
+    //         url: "/register",
+    //         data: JSON.stringify(fieldsetJSON({}, $('#field-info'))),
+    //         dataType: 'json',
+    //         contentType: "application/json; charset=utf-8",
+    //         success: function(resp) {
+    //             // window.location.replace('/generate/' + resp.registered);
+    //             $preview = $("#images-preview");
+    //             $preview.empty();
+    //             for (img of resp.images) {
+    //                 console.log(img);
+    //                 $preview.prepend(
+    //                     $('<div class="field-image">')
+    //                         .append($("<div>")
+    //                                 .append(img)
+    //                                 .add($("<img>", {
+    //                                     src: "/image/" + resp.registered + "/" + img
+    //                                 }))));
+    //             }
+    //         }
+    //     });
+    // });
 
     $('#download-zip-button').click(function() {
         $.ajax({

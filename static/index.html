@@ -15,25 +15,11 @@
       <div id="main" class="hflex">
         <div class="sidebar-left">
 
-          <fieldset id="map-options">
-            <legend>Map Options</legend>
-            <label for="mapTypeId">Map Type</label>
-            <select name="mapTypeId" id="select-map-type">
-              <option value="hybrid">Hybrid</option>
-              <option value="satellite">Satellite</option>
-              <option value="roadmap">Road map</option>
-            </select>
-          </fieldset>
-
           <form class="sidebar">
-            <fieldset>
-              <legend>Defaults</legend>
 
-              <label for="view">View</label>
-              <input name="view" id="inp_view" placeholder="Standard">
+            <input type="button" id="preview-button" value="Preview">
+            <input type="button" id="download-zip-button" value="Download zip">
 
-              
-            </fieldset>
             <fieldset id="field-info">
               <legend>Field information</legend>
               <label for="name">Field name</label>
@@ -76,18 +62,33 @@
               <input name="maxAltitude" data-type="float" placeholder="Max altitude">
               <input name="raceTime" data-type="float" placeholder="Race time">
             </fieldset>
-            <input type="button" id="preview-button" value="Preview">
-            <input type="button" id="download-zip-button" value="Download zip">
+            <fieldset>
+              <legend>Defaults</legend>
+              <label for="view">View</label>
+              <input name="view" id="inp_view" placeholder="Standard">
+            </fieldset>
           </form>    
+
+          <fieldset id="map-options">
+            <legend>Map Options</legend>
+            <label for="mapTypeId">Map Type</label>
+            <select name="mapTypeId" id="select-map-type">
+              <option value="hybrid">Hybrid</option>
+              <option value="satellite">Satellite</option>
+              <option value="roadmap">Road map</option>
+            </select>
+          </fieldset>
+
         </div>
-        <div class="main-spacer"> </div>
+        <!-- <div class="main-spacer"> </div> -->
         <div class="map">
           <div id="map-canvas" style="height: 90%"></div>
         </div>
-        <div class="main-spacer"> </div>
+        <!-- <div class="main-spacer"> </div> -->
         <div id="images-preview" class="vflex">
-          Images preview
+          <div style="margin: auto;">Images preview</div>
         </div>
+        <!-- <div class="right-spacer"> </div> -->
       </div>
     </div>
   </body>

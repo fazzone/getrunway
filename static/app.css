@@ -24,21 +24,18 @@ div.app {
 }
 
 #images-preview {
-    flex-grow: 1;
+    width: 350px;
+    padding: 0px 32px 0px 16px;
 }
 
 .field-image {
-    border: 1px solid;
+    /* border: 1px solid; */
     margin: auto;
 }
 
 div.sidebar-left {
     flex-grow: 1;
     max-width: 22em;
-}
-
-div.main-spacer {
-    width: 10px;
 }
 
 div.map {
