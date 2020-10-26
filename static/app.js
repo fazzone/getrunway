@@ -20,9 +20,10 @@ function initialize() {
             position: google.maps.ControlPosition.TOP_CENTER,
             // drawingModes: [google.maps.drawing.OverlayType.POLYGON]
         },
-        // polygonOptions: {
-        //     editable: true
-        // }
+        polygonOptions: {
+            editable: true,
+            draggable: true,
+        },
         drawingMode: null,
         markerOptions: {
             draggable: true,
@@ -386,32 +387,6 @@ $(function() {
             })(_size);
         }
     });
-
-
-    // $('#preview-button').click(function() {
-    //     $.ajax({
-    //         type: "POST",
-    //         url: "/register",
-    //         data: JSON.stringify(fieldsetJSON({}, $('#field-info'))),
-    //         dataType: 'json',
-    //         contentType: "application/json; charset=utf-8",
-    //         success: function(resp) {
-    //             // window.location.replace('/generate/' + resp.registered);
-    //             $preview = $("#images-preview");
-    //             $preview.empty();
-    //             for (img of resp.images) {
-    //                 console.log(img);
-    //                 $preview.prepend(
-    //                     $('<div class="field-image">')
-    //                         .append($("<div>")
-    //                                 .append(img)
-    //                                 .add($("<img>", {
-    //                                     src: "/image/" + resp.registered + "/" + img
-    //                                 }))));
-    //             }
-    //         }
-    //     });
-    // });
 
     $('#download-zip-button').click(function() {
         $.ajax({

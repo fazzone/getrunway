@@ -11,7 +11,6 @@ div.app {
 .hflex {
     display: flex;
     flex-direction: row;
-    height: 100%;
 }
 
 .vflex {
@@ -21,6 +20,7 @@ div.app {
 
 #main {
     flex-grow: 5;
+    height: 100%;
 }
 
 #images-preview {
@@ -44,4 +44,8 @@ div.map {
 
 fieldset {
     margin: 10px;
+}
+
+.remove-button {
+    background-color: #773030;
 }
