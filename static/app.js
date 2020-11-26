@@ -494,6 +494,11 @@ $(function() {
         }
     });
 
+    $('#button-goto-latlng').click(function() {
+        map.setCenter({lat: parseFloat($('#input-goto-lat').val()),
+                       lng: parseFloat($('#input-goto-lng').val())});
+    });
+
     $('#download-zip-button').click(function() {
         $.ajax({
             type: "POST",

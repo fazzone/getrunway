@@ -49,3 +49,7 @@ fieldset {
 .remove-button {
     background-color: #773030;
 }
+
+.inline-form input {
+    display: inline !important;
+}

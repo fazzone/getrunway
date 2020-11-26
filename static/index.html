@@ -84,7 +84,11 @@
         <div class="map">
           <div class="hflex">
             <span style="margin: auto;">
-              <h4>MAP TITLE</h4>
+              <form class="inline-form">
+                <input id="input-goto-lat" placeholder="Latitude e.g. 51.4778">
+                <input id="input-goto-lng" placeholder="Longitude e.g. -0.0014">
+                <input type="button" id="button-goto-latlng" value="Center map on lat/long">
+              </form>
             </span>
           </div>
           <div id="map-canvas" style="height: 90%"></div>
