@@ -78,11 +78,11 @@ function make_json_data() {
         if (mobj.type == 'triangle') triangle = mobj;
         if (mobj.type == 'circle') {
             nofly.push({
-                type: 'polygon',
+                type: 'circle',
                 inside_or_outside: mobj.inside_outside,
                 lat: mobj.overlay.getCenter().lat(),
                 lng: mobj.overlay.getCenter().lng(),
-                diameter: 2 * mobj.overlay.getRadius()
+                diameter: 2 * mobj.overlay.getRadius(),
             })
         }
         if (mobj.type == 'polygon') {
