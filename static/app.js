@@ -98,8 +98,6 @@ function make_json_data() {
     }
 
     if (runway == null) return {error: "runway data is required"};
-    console.log("Runway", runway);
-    console.log("Runway data path", runway.data.path);
 
     return {
         name: $('#input-field-name').val(),
@@ -109,8 +107,12 @@ function make_json_data() {
         runway: {
             path: runway.data.path
         },
-        startHeading: runway.data.heading,
-        nofly: nofly
+        triangle: {
+            path: triangle.data.path,
+            center: {lat: triangle.data.center.lat(),
+                     lng: triangle.data.center.lng()}
+        },
+        nofly: nofly,
     };
 }
 
