@@ -12,7 +12,7 @@ function initialize() {
             position: google.maps.ControlPosition.TOP_CENTER,
             drawingModes: [
                 google.maps.drawing.OverlayType.MARKER,
-                google.maps.drawing.OverlayType.RECTANGLE,
+                // google.maps.drawing.OverlayType.RECTANGLE,
                 google.maps.drawing.OverlayType.CIRCLE,
                 google.maps.drawing.OverlayType.POLYGON
             ]
@@ -68,44 +68,49 @@ function make_json_data() {
 
     var nofly_circle = {inside: [], outside: []},
         nofly_rect = {inside: [], outside: []},
-        nofly_poly = {};
+        nofly_poly = {inside: [], outside: []};
+
+    var nofly = [];
 
     for (mobj of MAP_OBJECTS) {
         if (mobj.deleted) continue;
         if (mobj.type == 'runway') runway = mobj;
         if (mobj.type == 'triangle') triangle = mobj;
         if (mobj.type == 'circle') {
-            nofly_circle[mobj.inside_outside].push({
+            nofly.push({
+                type: 'polygon',
+                inside_or_outside: mobj.inside_outside,
                 lat: mobj.overlay.getCenter().lat(),
-                long: mobj.overlay.getCenter().lng(),
+                lng: mobj.overlay.getCenter().lng(),
                 diameter: 2 * mobj.overlay.getRadius()
             })
         }
         if (mobj.type == 'polygon') {
-            if (nofly_poly[mobj.inside_outside]) return {error: "only one polygon allowed "};
             var path = [];
-            mobj.overlay.getPath().forEach((pt) => path.push({lat: pt.lat(), long: pt.lng()}));
-            nofly_poly[mobj.inside_outside] = path;
+            mobj.overlay.getPath().forEach((pt) => path.push({lat: pt.lat(), lng: pt.lng()}));
+            nofly.push({
+                type: 'polygon',
+                inside_or_outside: mobj.inside_outside,
+                path: path
+            });
         }
-        //todo rectangle
+        //todo rectangle?
     }
 
     if (runway == null) return {error: "runway data is required"};
+    console.log("Runway", runway);
+    console.log("Runway data path", runway.data.path);
 
     return {
         name: $('#input-field-name').val(),
         shortname: $('#input-field-short-name').val(),
         lat: runway.data.center.lat(),
-        long: runway.data.center.lng(),
+        lng: runway.data.center.lng(),
         runway: {
-            length: runway.data.length,
-            width: runway.data.width
+            path: runway.data.path
         },
         startHeading: runway.data.heading,
-        NoFlyCircleInside: nofly_circle.inside,
-        NoFlyCircleOutside: nofly_circle.outside,
-        NoFlyPolyInside: nofly_poly.inside,
-        NoFlyPolyOutside: nofly_poly.outside
+        nofly: nofly
     };
 }
 
@@ -148,7 +153,8 @@ function marker_poly(me, type, data) {
 
     let set_path = function() {
         let r = me.data;
-        the_poly.setPath(me.data.path_fn(r.heading, r.length, r.width, r.center));
+        let path = me.data.path_fn(r.heading, r.length, r.width, r.center);
+        the_poly.setPath(me.data.path = path);
     }
 
     let from_text = function($el) {
@@ -297,7 +303,7 @@ function on_circle_complete(me) {
     let circle_from_text = function() {
         $el = $(sel);
         let lat = parseFloat($el.find("[name='lat']").val()),
-            lng = parseFloat($el.find("[name='long']").val()),
+            lng = parseFloat($el.find("[name='lng']").val()),
             r   = parseFloat($el.find("[name='radius']").val());
         the_circle.setCenter(new google.maps.LatLng(lat, lng))
         the_circle.setRadius(r);
@@ -333,7 +339,7 @@ function on_circle_complete(me) {
             .append($('<legend>Circle #' + my_counter + '</legend>'))
             .append($('<div data-visible="false" style="display: none;">')
                     .append($('<input name="lat" class="val-lat" data-type="float" placeholder="Latitude">').click(circle_from_text).change(circle_from_text))
-                    .append($('<input name="long" class="val-lng" data-type="float" placeholder="Longitude">').click(circle_from_text).change(circle_from_text))
+                    .append($('<input name="lng" class="val-lng" data-type="float" placeholder="Longitude">').click(circle_from_text).change(circle_from_text))
                     .append($('<input name="radius" class="val-radius" data-type="float" placeholder="Radius">').click(circle_from_text).change(circle_from_text)))
             .append($('<label>')
                     .append('Radius: <span class="text-radius"></span> meters')
@@ -499,17 +505,24 @@ $(function() {
                        lng: parseFloat($('#input-goto-lng').val())});
     });
 
-    $('#download-zip-button').click(function() {
-        $.ajax({
-            type: "POST",
-            url: "/register",
-            data: JSON.stringify(fieldsetJSON({}, $('#field-info'))),
-            dataType: 'json',
-            contentType: "application/json; charset=utf-8",
-            success: function(resp) {
-                window.location.replace('/generate/' + resp.registered);
-            }
-        });
+    $('#download-json-button').click(function() {
+        let $el = $('<a>')
+            .attr('href', URL.createObjectURL(new Blob([JSON.stringify(make_json_data(), null, 2)])))
+            .attr('download', 'fields.json');
+        $el[0].click();
     });
+
+    // $('#download-zip-button').click(function() {
+    //     $.ajax({
+    //         type: "POST",
+    //         url: "/register",
+    //         data: JSON.stringify(fieldsetJSON({}, $('#field-info'))),
+    //         dataType: 'json',
+    //         contentType: "application/json; charset=utf-8",
+    //         success: function(resp) {
+    //             window.location.replace('/generate/' + resp.registered);
+    //         }
+    //     });
+    // });
 });
 
