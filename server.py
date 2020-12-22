@@ -172,3 +172,6 @@ def upload_file():
 
 
         
+@app.route('/', methods=['GET'])
+def whatever():
+    return "ok"
