@@ -118,7 +118,7 @@ def get_file(file_id):
     cur = conn.cursor()
     cur.execute('select destination, data from file f join blob b on f.blob_id = b.id where f.id = %s', (file_id, ))
     (dest, data) = cur.fetchone()
-    return send_file(io.BytesIO(data), as_attachment=True, attachment_filename=os.path.basename(dest))
+    return send_file(io.BytesIO(data), mimetype = "application/whatever")
 
 from werkzeug.utils import secure_filename
 
