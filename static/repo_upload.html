@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/static/jquery.min.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC24saqgVy2IkTlXnrDnt-VNysJire_0lc&libraries=drawing" type="text/javascript"></script>
+
+    <script src="/static/app.js"></script>
+    <link rel="stylesheet" href="/static/water.dark.min.css">
+    <link rel="stylesheet" href="/static/app.css">
+    <title>Repo upload</title>
+  </head>
+  <body>
+    <div class="app vflex">
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <fieldset>
+          <label> Author <input type="text" name="author"></label>
+          <label> App name <input type="text" name="name"></label>
+          <label> Version <input type="text" name="version"></label>
+          <label> Description <input type="text" name="description"></label>
+          <label> Preview icon URL <input type="text" name="previewicon"></label>
+        </fieldset>
+        <input type="file" name="file">
+        <input type="submit" value="Upload (takes a while)">
+      </form>
+    </div>
+  </body>
+</html> 

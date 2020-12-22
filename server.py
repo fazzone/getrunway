@@ -96,3 +96,79 @@ def generate(uuid):
     bio.seek(0)
     return send_file(bio, as_attachment=True, attachment_filename="{}.zip".format(uuid))
 
+import os
+import psycopg2
+
+DATABASE_URL = os.environ['DATABASE_URL']
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+
+
+@app.route('/apps.json', methods=['GET'])
+def jeti_repo():
+    cur = conn.cursor()
+    cur.execute("""SELECT json from apps_json_view""")
+    rs = cur.fetchall()
+    return {'applications': [r[0] for r in rs]}
+
+def url_for_file(file_id):
+    return 'https://gentle-bastion-87288.herokuapp.com/file/' + str(file_id)
+
+@app.route('/file/<file_id>', methods=['GET'])
+def get_file(file_id):
+    cur = conn.cursor()
+    cur.execute('select destination, data from file f join blob b on f.blob_id = b.id where f.id = %s', (file_id, ))
+    (dest, data) = cur.fetchone()
+    return send_file(io.BytesIO(data), as_attachment=True, attachment_filename=os.path.basename(dest))
+
+from werkzeug.utils import secure_filename
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    cur = conn.cursor()
+    cur.execute('''
+    insert into application(author, version, "previewIcon", "releaseDate")
+    values                 (%s,     %s,      %s,            now())
+    returning id
+    ''', (request.form['author'], request.form['version'], request.form['previewIcon']))
+    application_id = cur.fetchone()[0]
+    print("Application ID: " + str(application_id))
+    sys.stdout.flush()
+
+    cur.execute('''
+    insert into app_name(application_id, language, name)
+    values (%s, 'en', %s)
+    ''', (application_id, request.form['name']))
+
+    cur.execute('''
+    insert into app_description(application_id, language, description)
+    values (%s, 'en', %s)
+    ''', (application_id, request.form['description']))
+
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            return "error"
+        file = request.files['file']
+        if file.filename == '':
+            return "no selected file"
+        if file:
+            with zipfile.ZipFile(file) as zip: 
+                for zi in zip.infolist():
+                    if zi.filename[-1] != '/':
+                        with zip.open(zi.filename, "r") as f:
+                            data = f.read()
+                            cur.execute('insert into blob(data) values (%s) returning id', (psycopg2.Binary(data), ))
+                            blob_id = cur.fetchone()[0]
+                            
+                            cur.execute('''
+                            insert into file(application_id, destination, size, hash, blob_id) 
+                            values          (%s,             %s,          %s,   %s,   %s)
+                            returning id
+                            ''',
+                            (application_id, zi.filename, len(data), hashlib.sha1(data).hexdigest(), blob_id))
+                            file_id = cur.fetchone()[0]
+            conn.commit()
+            return "ok"
+
+
+        
