@@ -106,7 +106,7 @@ conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 @app.route('/apps.json', methods=['GET'])
 def jeti_repo():
     cur = conn.cursor()
-    cur.execute("""SELECT json from apps_json_view2""")
+    cur.execute("""SELECT json from apps_json_view""")
     rs = cur.fetchall()
     return {'applications': [r[0] for r in rs]}
 
