@@ -108,6 +108,7 @@ def jeti_repo():
     cur = conn.cursor()
     cur.execute("""SELECT json from apps_json_view2""")
     rs = cur.fetchall()
+    conn.commit()
     return {'applications': [r[0] for r in rs]}
 
 def url_for_file(file_id):
@@ -118,6 +119,7 @@ def get_file(file_id):
     cur = conn.cursor()
     cur.execute('select destination, data from file f join blob b on f.blob_id = b.id where f.id = %s', (file_id, ))
     (dest, data) = cur.fetchone()
+    conn.commit()
     return send_file(io.BytesIO(data), mimetype = "application/whatever")
 
 from werkzeug.utils import secure_filename
@@ -175,3 +177,4 @@ def upload_file():
 @app.route('/', methods=['GET'])
 def whatever():
     return "ok"
+
