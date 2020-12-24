@@ -106,7 +106,7 @@ function make_json_data() {
         lng: runway.data.center.lng(),
         runway: {
             path: runway.data.path,
-            haeding: runway.data.heading
+            heading: runway.data.heading
         },
         triangle: {
             path: triangle.data.path,
@@ -503,6 +503,24 @@ $(function() {
                 xhr.send(JSON.stringify(make_json_data()));
             })(_size);
         }
+    });
+
+
+    $('#create-repo-button').click(function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/create_repo", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function(e) {
+            console.log("Xhronload", e);
+            console.log("Response", xhr.response);
+            let repo_url = xhr.response;
+            $('#created-repo-url').append(
+                $('<a>')
+                    .text("Created repository")
+                    .attr('href', xhr.response));
+        };
+
+        xhr.send(JSON.stringify(make_json_data()));
     });
 
     $('#button-goto-latlng').click(function() {

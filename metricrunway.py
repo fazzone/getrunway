@@ -116,17 +116,16 @@ defImages = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
 # startheading (aka trueDir)
 
 def do_field(fld, field_image_width_m):
-
   field_name=fld["name"]
   short_name=fld["shortname"]
 
   View = fld.get("View", "Standard")
   latitude = fld["lat"]
   coslat = math.cos(math.radians(latitude))
-  longitude = fld["long"]
-  trueDir = fld["startHeading"]
-  runway_length_m = fld["runway"]["length"]
-  runway_width_m =  fld["runway"]["width"]
+  longitude = fld["lng"]
+  trueDir = fld["runway"]["heading"]
+  # runway_length_m = fld["runway"]["length"]
+  # runway_width_m =  fld["runway"]["width"]
   runway_x_offset_m = fld["runway"].get("x_offset", 0)
   runway_y_offset_m = -fld["runway"].get("y_offset", 0)
     
@@ -211,8 +210,8 @@ def do_field(fld, field_image_width_m):
 
     wwGrc, hhGrc = Gmaps_rotate_crop.size # note image size again...
 
-    runway_width_px    = runway_width_m    * Gmaps_px_per_meter(latitude, zoom)
-    runway_length_px   = runway_length_m   * Gmaps_px_per_meter(latitude, zoom)
+    # runway_width_px    = runway_width_m    * Gmaps_px_per_meter(latitude, zoom)
+    # runway_length_px   = runway_length_m   * Gmaps_px_per_meter(latitude, zoom)
     runway_x_offset_px = runway_x_offset_m * Gmaps_px_per_meter(latitude, zoom)
     runway_y_offset_px = runway_y_offset_m * Gmaps_px_per_meter(latitude, zoom)   
     
@@ -234,10 +233,10 @@ def do_field(fld, field_image_width_m):
     
     wwj, hhj = Jeti.size # note image size again... j/Grc ratio will adjust px per inch
 
-    runway_length_px = runway_length_px * wwj/wwGrc
-    runway_width_px    = runway_width_px  * hhj/hhGrc
-    runway_x_offset_px = runway_x_offset_px * wwj/wwGrc
-    runway_y_offset_px = runway_y_offset_px * hhj/hhGrc     
+    # runway_length_px = runway_length_px * wwj/wwGrc
+    # runway_width_px    = runway_width_px  * hhj/hhGrc
+    # runway_x_offset_px = runway_x_offset_px * wwj/wwGrc
+    # runway_y_offset_px = runway_y_offset_px * hhj/hhGrc     
 
     # draw the yellow rectangle for the runway to confirm registration
     # print("runway_length_px, runway_x_offset_px: ", runway_length_px, runway_x_offset_px)      # remove runway drawing on map for now

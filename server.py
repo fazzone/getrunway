@@ -67,10 +67,32 @@ def go():
     return jsonify({'registered': str(k),
                     'images': list(images.keys())})
 
+def save_blob(cur, data):
+    cur.execute('insert into blob(data) values (%s) returning id', (psycopg2.Binary(data), ))
+    blob_id = cur.fetchone()[0]
+    return blob_id
+
+def url_for_repo(repo_id):
+    return "{}/repo/{}/apps.json".format(APP_BASE_URL, repo_id)
+
+@app.route('/repo/<repo_id>/<ignored>', methods=['GET'])
+def get_repo(repo_id, ignored):
+    cur = conn.cursor()
+    cur.execute('SELECT json from apps_json_view where repository_id = %s', (repo_id, ))
+    rs = cur.fetchall()
+    conn.commit()
+    return {'applications': [r[0] for r in rs]}
+
+
 @app.route('/fancy/<image_width_m_str>', methods=['POST'])
 def image_xhr(image_width_m_str):
-    buf = io.BytesIO(do_field(request.json, int(image_width_m_str)))
+    image_data = do_field(request.json, int(image_width_m_str))
+    buf = io.BytesIO(image_data)
     buf.seek(0)
+    cur = conn.cursor()
+    blob_id = save_blob(cur, image_data)
+    print("Saved blob " + repr(blob_id))
+    conn.commit()
     return send_file(buf, mimetype = "image/png")
 
 @app.route('/image/<uuid>/<img>', methods=['GET'])
@@ -102,7 +124,6 @@ import psycopg2
 DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
-
 @app.route('/apps.json', methods=['GET'])
 def jeti_repo():
     cur = conn.cursor()
@@ -111,8 +132,10 @@ def jeti_repo():
     conn.commit()
     return {'applications': [r[0] for r in rs]}
 
+APP_BASE_URL='https://gentle-bastion-87288.herokuapp.com'
+
 def url_for_file(file_id):
-    return 'https://gentle-bastion-87288.herokuapp.com/file/' + str(file_id)
+    return "{}/file/{}".format(APP_BASE_URL, file_id)
 
 @app.route('/file/<file_id>', methods=['GET'])
 def get_file(file_id):
@@ -123,6 +146,63 @@ def get_file(file_id):
     return send_file(io.BytesIO(data), mimetype = "application/whatever")
 
 from werkzeug.utils import secure_filename
+
+def create_application(cur, author, version, icon):
+    cur = conn.cursor()
+    cur.execute('''
+    insert into application(author, version, "previewIcon", "releaseDate")
+    values                 (%s,     %s,      %s,            now())
+    returning id
+    ''',                   (author, version, icon))
+    application_id = cur.fetchone()[0]
+    return application_id
+
+def set_app_name(cur, app_id, lang, name):
+    cur.execute('''
+    insert into app_name(application_id, language, name)
+                 values (%s,             %s,       %s)
+    ''',                (app_id,         lang,     name))
+
+def set_app_desc(cur, app_id, lang, desc):
+    cur.execute('''
+    insert into app_description(application_id, language, description)
+                 values (%s,             %s,       %s)
+    ''',                (app_id,         lang,     desc))
+    
+
+@app.route('/create_repo', methods=['POST'])
+def create_repo():
+    sizes = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
+    cur = conn.cursor()
+    app_id = create_application(cur,
+                                author="Author",
+                                version="0.0.0",
+                                icon="{}/static/DFM.png".format(APP_BASE_URL))
+
+    set_app_name(cur, app_id, lang="en", name="Description")
+    set_app_desc(cur, app_id, lang="en", desc="Generated app")
+
+    for s in sizes:
+        image_data = do_field(request.json, s)
+        blob_id = save_blob(cur, image_data)
+        sha1 = hashlib.sha1(image_data).hexdigest()
+        dest = "{}/{}.png".format(request.json["shortname"], s)
+        cur.execute('''
+        insert into file(application_id, destination, size, hash, blob_id) 
+        values          (%s,             %s,          %s,   %s,   %s)
+        returning id
+        ''',
+                    (app_id, dest, len(image_data), sha1, blob_id))
+
+    cur.execute('insert into repository default values returning id')
+    repo_id = cur.fetchone()[0]
+
+    cur.execute('insert into repository_application(repository_id, application_id) values(%s, %s)', (repo_id, app_id))
+
+    conn.commit()
+    return url_for_repo(repo_id)
+    # return "Created repository {}".format(repo_id)
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
