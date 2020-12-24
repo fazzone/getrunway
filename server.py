@@ -186,7 +186,7 @@ def create_repo():
         image_data = do_field(request.json, s)
         blob_id = save_blob(cur, image_data)
         sha1 = hashlib.sha1(image_data).hexdigest()
-        dest = "{}/{}.png".format(request.json["shortname"], s)
+        dest = "Apps/DFM-TriM/{}/{}.png".format(request.json["shortname"], s)
         cur.execute('''
         insert into file(application_id, destination, size, hash, blob_id) 
         values          (%s,             %s,          %s,   %s,   %s)
