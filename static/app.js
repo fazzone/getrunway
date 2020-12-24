@@ -105,12 +105,15 @@ function make_json_data() {
         lat: runway.data.center.lat(),
         lng: runway.data.center.lng(),
         runway: {
-            path: runway.data.path
+            path: runway.data.path,
+            haeding: runway.data.heading
         },
         triangle: {
             path: triangle.data.path,
+            heading: triangle.data.heading,
             center: {lat: triangle.data.center.lat(),
-                     lng: triangle.data.center.lng()}
+                     lng: triangle.data.center.lng()},
+
         },
         nofly: nofly,
     };
