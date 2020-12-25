@@ -50,11 +50,11 @@ function initialize() {
                 $('#triangle-form').css('display', 'block');
                 $('#runway-form')
                     .empty()
-                    .append(marker_poly(m_obj, 'runway',   {title: 'Runway',   path_fn: runway_path,   length: 100, width: 10}));
+                    .append(marker_poly(m_obj, 'runway', ['length', 'width'],  {title: 'Runway',   path_fn: runway_path,   length: 100, width: 10}));
             } else if (marker_type == 'triangle') {
                 $('#triangle-form')
                     .empty()
-                    .append(marker_poly(m_obj, 'triangle', {title: 'Triangle', path_fn: triangle_path, length: 100, width: 200}));
+                    .append(marker_poly(m_obj, 'triangle', ['size'], {title: 'Triangle', path_fn: triangle_path, size: 100}));
             } 
         }
         MAP_OBJECTS.push(m_obj);
@@ -133,7 +133,7 @@ function get_type_for_new_marker() {
 
 }
 
-function marker_poly(me, type, data) {
+function marker_poly(me, type, attrs, data) {
     let the_marker = me.overlay,
         my_counter = MAP_OBJECTS.length,
         element_id = "marker-runway-" + my_counter,
@@ -158,13 +158,16 @@ function marker_poly(me, type, data) {
 
     let set_path = function() {
         let r = me.data;
-        let path = me.data.path_fn(r.heading, r.length, r.width, r.center);
+        let path = me.data.path_fn(r);
         the_poly.setPath(me.data.path = path);
     }
 
     let from_text = function($el) {
-        me.data.length = parseFloat($el.find("[name='length']").val());
-        me.data.width = parseFloat($el.find("[name='width']").val());
+        for (a of attrs) {
+            me.data[a] = parseFloat($el.find("[name='" + a +"']").val());
+        }
+        // me.data.length = parseFloat($el.find("[name='length']").val());
+        // me.data.width = parseFloat($el.find("[name='width']").val());
         me.data.heading = parseFloat($el.find("[name='heading']").val());
         set_path();
         return $el;
@@ -178,29 +181,27 @@ function marker_poly(me, type, data) {
         set_path();
     });
 
+    let $data = $('<div class="runway-data" data-visible="false" style="display: block;">');
+    for (a of attrs) {
+        $data = $data.append($('<label>')
+                             .append(a + " (meters)")
+                             .append($('<input name="' + a + '">')
+                                     .val(me.data[a])
+                                     .on('input', () => from_text($(sel)))));
+    }
+
     return from_text(
         $('<fieldset>')
             .attr('id', element_id)
             .append($('<legend>').text(me.data.title))
-            .append($('<div class="runway-data" data-visible="false" style="display: block;">')
-                    .append($('<label>')
-                            .append("Length (meters)")
-                            .append($('<input name="length">')
-                                    .val(me.data.length)
-                                    .on('input', () => from_text($(sel)))))
-                    .append($('<label>')
-                            .append("Width (meters)")
-                            .append($('<input name="width">')
-                                    .val(me.data.width)
-                                    .on('input', () => from_text($(sel)))))
-                    .append($('<label>')
-                            .append('Heading: ')
-                            .append('<span class="text-heading">0</span>')
-                            .append($('<input type="range" name="heading" min="0" value="0" max="360">')
-                                    .on('input', function() {
-                                        $(sel).find(".text-heading").text($(this).val());
-                                        window.requestAnimationFrame(() => from_text($(sel)));
-                                    }))))
+            .append($data.append($('<label>')
+                                 .append('Heading: ')
+                                 .append('<span class="text-heading">0</span>')
+                                 .append($('<input type="range" name="heading" min="0" value="0" max="360">')
+                                         .on('input', function() {
+                                             $(sel).find(".text-heading").text($(this).val());
+                                             window.requestAnimationFrame(() => from_text($(sel)));
+                                         }))))
             .append($('<input type="button" class="remove-button" value="Remove">').click(remove_marker)));
 }
 
@@ -298,8 +299,6 @@ function select_inside_outside(me) {
 }
 
 function on_circle_complete(me) {
-    console.log("OCC");
-
     let the_circle = me.overlay,
         my_counter = MAP_OBJECTS.length,
         element_id = "circle-" + my_counter,
@@ -403,32 +402,32 @@ function offset_point(pt, meters_north, meters_east) {
              lng: pt.lng() + (meters_east * m_lng) / Math.cos(pt.lat() * Math.PI / 180)};
 }
 
-function triangle_path(rotation, h_extent, v_extent, base_center_pos) {
-    let theta = rotation * Math.PI / 180,
-        vy = v_extent * Math.sin(theta),
-        vx = v_extent * Math.cos(theta),
-        hy = h_extent * Math.sin(theta + Math.PI/2),
-        hx = h_extent * Math.cos(theta + Math.PI/2);
+function triangle_path(tri) {
+    let theta = tri.heading * Math.PI / 180,
+        vy = tri.size * Math.sin(theta),
+        vx = tri.size * Math.cos(theta),
+        hy = tri.size * Math.sin(theta + Math.PI/2),
+        hx = tri.size * Math.cos(theta + Math.PI/2);
 
     return [
-        offset_point(base_center_pos, vx, vy),
-        offset_point(base_center_pos, hx, hy),
-        offset_point(base_center_pos, -hx, -hy),
+        offset_point(tri.center, vx, vy),
+        offset_point(tri.center, hx, hy),
+        offset_point(tri.center, -hx, -hy),
     ]
 }
 
-function runway_path(rotation, length, width, center_pos) {
-    let theta = rotation * Math.PI / 180,
-        vy = length * Math.sin(theta),
-        vx = length * Math.cos(theta),
-        hy = width * Math.sin(theta + Math.PI/2),
-        hx = width * Math.cos(theta + Math.PI/2);
+function runway_path(r) {
+    let theta = r.heading * Math.PI / 180,
+        vy = 0.5 * r.length * Math.sin(theta),
+        vx = 0.5 * r.length * Math.cos(theta),
+        hy = 0.5 * r.width * Math.sin(theta + Math.PI/2),
+        hx = 0.5 * r.width * Math.cos(theta + Math.PI/2);
     
     return [
-        offset_point(center_pos, vx-hx, vy-hy), //top left
-        offset_point(center_pos, vx+hx, vy+hy), //top right
-        offset_point(center_pos, hx-vx, hy-vy), //bottom right
-        offset_point(center_pos, -hx-vx, -hy-vy), //bottom left
+        offset_point(r.center, vx-hx, vy-hy), //top left
+        offset_point(r.center, vx+hx, vy+hy), //top right
+        offset_point(r.center, hx-vx, hy-vy), //bottom right
+        offset_point(r.center, -hx-vx, -hy-vy), //bottom left
     ];
 }
 
