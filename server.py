@@ -72,6 +72,11 @@ def save_blob(cur, data):
     blob_id = cur.fetchone()[0]
     return blob_id
 
+
+APP_BASE_URL = os.environ['APP_BASE_URL']
+
+APP_BASE_URL='https://gentle-bastion-87288.herokuapp.com'
+
 def url_for_repo(repo_id):
     return "{}/repo/{}/apps.json".format(APP_BASE_URL, repo_id)
 
@@ -131,8 +136,6 @@ def jeti_repo():
     rs = cur.fetchall()
     conn.commit()
     return {'applications': [r[0] for r in rs]}
-
-APP_BASE_URL='https://gentle-bastion-87288.herokuapp.com'
 
 def url_for_file(file_id):
     return "{}/file/{}".format(APP_BASE_URL, file_id)
@@ -201,20 +204,17 @@ def create_repo():
 
     conn.commit()
     return url_for_repo(repo_id)
-    # return "Created repository {}".format(repo_id)
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
     cur = conn.cursor()
+
     cur.execute('''
     insert into application(author, version, "previewIcon", "releaseDate")
     values                 (%s,     %s,      %s,            now())
     returning id
-    ''', (request.form['author'], request.form['version'], request.form['previewIcon']))
+    ''', (request.form['author'], request.form['version'], request.form['previewicon']))
     application_id = cur.fetchone()[0]
-    print("Application ID: " + str(application_id))
-    sys.stdout.flush()
 
     cur.execute('''
     insert into app_name(application_id, language, name)
@@ -249,8 +249,8 @@ def upload_file():
                             ''',
                             (application_id, zi.filename, len(data), hashlib.sha1(data).hexdigest(), blob_id))
                             file_id = cur.fetchone()[0]
-            conn.commit()
-            return "ok"
+    conn.commit()
+    return "ok"
 
 
         
