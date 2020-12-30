@@ -8,6 +8,8 @@ import base64
 from flask import Flask, request, jsonify, send_file
 #from getrunway import do_field
 from metricrunway import do_field
+import os
+import psycopg2
 app = Flask(__name__)
 
 registered_fields = {}
@@ -75,15 +77,16 @@ def save_blob(cur, data):
 
 APP_BASE_URL = os.environ['APP_BASE_URL']
 
-APP_BASE_URL='https://gentle-bastion-87288.herokuapp.com'
-
 def url_for_repo(repo_id):
     return "{}/repo/{}/apps.json".format(APP_BASE_URL, repo_id)
 
 @app.route('/repo/<repo_id>/<ignored>', methods=['GET'])
 def get_repo(repo_id, ignored):
     cur = conn.cursor()
-    cur.execute('SELECT json from apps_json_view where repository_id = %s', (repo_id, ))
+    # cur.execute('SELECT json from apps_json_view where repository_id = %s', (repo_id, ))
+    cur.execute('select * from get_apps_json(%s, %s)', (APP_BASE_URL, repo_id))
+    print("Get apps json")
+    sys.stdout.flush()
     rs = cur.fetchall()
     conn.commit()
     return {'applications': [r[0] for r in rs]}
@@ -123,19 +126,9 @@ def generate(uuid):
     bio.seek(0)
     return send_file(bio, as_attachment=True, attachment_filename="{}.zip".format(uuid))
 
-import os
-import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-
-@app.route('/apps.json', methods=['GET'])
-def jeti_repo():
-    cur = conn.cursor()
-    cur.execute("""SELECT json from apps_json_view""")
-    rs = cur.fetchall()
-    conn.commit()
-    return {'applications': [r[0] for r in rs]}
 
 def url_for_file(file_id):
     return "{}/file/{}".format(APP_BASE_URL, file_id)
