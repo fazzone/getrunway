@@ -281,7 +281,7 @@ def create_repo():
                   sha1 = hashlib.sha1(image_data).hexdigest(),
                   blob_id = save_blob(cur, image_data))
 
-    json_data = json.dumps(request.json)
+    json_data = json.dumps(request.json, ensure_ascii=False).encode('utf8')
     print("Save json data")
     print(json_data)
     save_file(cur,
