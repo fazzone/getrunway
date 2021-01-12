@@ -50,6 +50,10 @@ fieldset {
     background-color: #773030;
 }
 
+.table-button {
+    background-color: #444;
+}
+
 .inline-form input {
     display: inline !important;
 }

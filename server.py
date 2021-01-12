@@ -5,11 +5,12 @@ import sys
 import zipfile
 import hashlib
 import base64
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 #from getrunway import do_field
 from metricrunway import do_field
 import os
 import psycopg2
+from psycopg2.extras import Json
 app = Flask(__name__)
 
 registered_fields = {}
@@ -128,7 +129,8 @@ def generate(uuid):
 
 
 DATABASE_URL = os.environ['DATABASE_URL']
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+# conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+conn = psycopg2.connect(DATABASE_URL)
 
 def url_for_file(file_id):
     return "{}/file/{}".format(APP_BASE_URL, file_id)
@@ -139,17 +141,41 @@ def get_file(file_id):
     cur.execute('select destination, data from file f join blob b on f.blob_id = b.id where f.id = %s', (file_id, ))
     (dest, data) = cur.fetchone()
     conn.commit()
-    return send_file(io.BytesIO(data), mimetype = "application/whatever")
+    return send_file(io.BytesIO(data), mimetype = "application/octet-stream")
+
+@app.route('/blob/<blob_id>', methods=['GET'])
+def get_blob(blob_id):
+    cur = conn.cursor()
+    cur.execute('select data from blob b where b.id = %s', (blob_id, ))
+    data = cur.fetchone()[0]
+    conn.commit()
+    return send_file(io.BytesIO(data), mimetype = "application/octet-stream")
+
+@app.route('/app/<app_id>/description/<language>', methods=['GET'])
+def get_app_description(app_id, language):
+    cur = conn.cursor()
+    cur.execute('select description from app_description ad where ad.application_id = %s and ad.language = %s', (app_id, language))
+    d = cur.fetchone()[0]
+    conn.commit()
+    return d
+
+@app.route('/app/<app_id>', methods=['GET'])
+def get_app_route(app_id):
+     cur = conn.cursor()
+     cur.execute('select get_app(%s)', (app_id,))
+     data = cur.fetchone()[0]
+     conn.commit()
+     return jsonify(data)
 
 from werkzeug.utils import secure_filename
 
-def create_application(cur, author, version, icon):
+def create_application(cur, source, author, version, icon):
     cur = conn.cursor()
     cur.execute('''
-    insert into application(author, version, "previewIcon", "releaseDate")
-    values                 (%s,     %s,      %s,            now())
+    insert into application(source, author, version, "previewIcon", "releaseDate")
+    values                 (%s    , %s,     %s,      %s,            now())
     returning id
-    ''',                   (author, version, icon))
+    ''',                   (source, author, version, icon))
     application_id = cur.fetchone()[0]
     return application_id
 
@@ -164,31 +190,86 @@ def set_app_desc(cur, app_id, lang, desc):
     insert into app_description(application_id, language, description)
                  values (%s,             %s,       %s)
     ''',                (app_id,         lang,     desc))
-    
+
+@app.route('/backoffice/<token>/blob_upload', methods=['GET','POST'])
+def backoffice_blob_upload(token):
+    cur = conn.cursor()
+    cur.execute('select * from backoffice_token where id = %s', (token, ))
+    if len(cur.fetchall()) == 0:
+        return "unauthorized", 403
+    if request.method == 'GET':
+        return send_file('static/blob_upload.html')
+    elif request.method == 'POST':
+        if 'file' not in request.files:
+            return "no file upload", 400
+        f = request.files['file']
+        if f is None or f.filename == '':
+            return "no selected file", 400
+        blob_id = save_blob(cur, f.read())
+        conn.commit()
+        return "Saved blob {}".format(blob_id)
+
+@app.route('/backoffice/<token>/<path>', methods=['GET','POST'])
+def backoffice_route(token, path):
+    cur = conn.cursor()
+    cur.execute('select * from backoffice_token where id = %s', (token, ))
+    is_auth = len(cur.fetchall()) > 0
+    conn.commit()
+    if not is_auth:
+        return "unauthorized", 403
+    if request.method == 'GET' and path in ['backoffice.js', 'backoffice.html']:
+        return send_file('static/backoffice/' + path)
+    if request.method == 'GET' and path == 'templates':
+        cur = conn.cursor()
+        cur.execute('select row_to_json(at) from application_template at')
+        data = cur.fetchall()
+        conn.commit()
+        return jsonify([r[0] for r in data])
+    if request.method == 'POST' and path == 'templates':
+        cur = conn.cursor()
+        try:
+            cur.execute('select update_application_templates(%s::jsonb)', (Json(request.json), ))
+            data = cur.fetchone()[0]
+            conn.commit()
+            return jsonify(data)
+        except psycopg2.Error as err:
+            print(err)
+            print(str(err))
+            conn.rollback()
+            return str(err), 500
+
+    if request.method == 'GET' and path == 'all_apps':
+        cur = conn.cursor()
+        cur.execute('select row_to_json(a) from application a')
+        data = cur.fetchall()
+        conn.commit()
+        return jsonify([r[0] for r in data])
+    return 500
+
 
 @app.route('/create_repo', methods=['POST'])
 def create_repo():
     sizes = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
     cur = conn.cursor()
-    app_id = create_application(cur,
-                                author="Author",
-                                version="0.0.0",
-                                icon="{}/static/DFM.png".format(APP_BASE_URL))
 
-    set_app_name(cur, app_id, lang="en", name="Description")
-    set_app_desc(cur, app_id, lang="en", desc="Generated app")
+    cur.execute("select id, path_prefix from clone_application((select application_id from application_template where template_type = 'maps_app'))")
 
+    created_app_row = cur.fetchone()
+    app_id = created_app_row[0]
+    path_prefix = created_app_row[1]
     for s in sizes:
         image_data = do_field(request.json, s)
         blob_id = save_blob(cur, image_data)
         sha1 = hashlib.sha1(image_data).hexdigest()
-        dest = "Apps/DFM-TriM/{}/{}.png".format(request.json["shortname"], s)
+        dest = "{}/{}/{}.png".format(path_prefix, request.json["shortname"], s)
         cur.execute('''
-        insert into file(application_id, destination, size, hash, blob_id) 
-        values          (%s,             %s,          %s,   %s,   %s)
+        insert into file(destination, size, hash, blob_id) 
+        values          (%s,          %s,   %s,   %s)
         returning id
         ''',
-                    (app_id, dest, len(image_data), sha1, blob_id))
+                    (dest, len(image_data), sha1, blob_id))
+        file_id = cur.fetchone()[0]
+        cur.execute('insert into application_file(application_id, file_id) values (%s, %s)', (app_id, file_id))
 
     cur.execute('insert into repository default values returning id')
     repo_id = cur.fetchone()[0]
@@ -202,12 +283,11 @@ def create_repo():
 def upload_file():
     cur = conn.cursor()
 
-    cur.execute('''
-    insert into application(author, version, "previewIcon", "releaseDate")
-    values                 (%s,     %s,      %s,            now())
-    returning id
-    ''', (request.form['author'], request.form['version'], request.form['previewicon']))
-    application_id = cur.fetchone()[0]
+    application_id = create_application(cur,
+                                        source = "zip upload",
+                                        author = request.form['author'],
+                                        version = request.form['version'],
+                                        icon = request.form['previewicon'])
 
     cur.execute('''
     insert into app_name(application_id, language, name)
@@ -228,6 +308,12 @@ def upload_file():
             return "no selected file"
         if file:
             with zipfile.ZipFile(file) as zip: 
+                path_prefix = os.path.commonprefix([zi.filename for zi in zip.infolist() if zi.filename[-1] != '/'])
+                print("Path prefix {}".format(path_prefix))
+                if path_prefix == "":
+                    return "Zip file must have a non-empty path prefix"
+                prefixlen = len(path_prefix)
+                cur.execute('update application set path_prefix = %s where id = %s', ('Apps/'+path_prefix, application_id))
                 for zi in zip.infolist():
                     if zi.filename[-1] != '/':
                         with zip.open(zi.filename, "r") as f:
@@ -236,12 +322,13 @@ def upload_file():
                             blob_id = cur.fetchone()[0]
                             
                             cur.execute('''
-                            insert into file(application_id, destination, size, hash, blob_id) 
-                            values          (%s,             %s,          %s,   %s,   %s)
+                            insert into file(destination, size, hash, blob_id) 
+                            values          (%s,          %s,   %s,   %s)
                             returning id
                             ''',
-                            (application_id, zi.filename, len(data), hashlib.sha1(data).hexdigest(), blob_id))
+                            ('Apps/' + zi.filename, len(data), hashlib.sha1(data).hexdigest(), blob_id))
                             file_id = cur.fetchone()[0]
+                            cur.execute('insert into application_file(application_id, file_id) values (%s, %s)', (application_id, file_id))
     conn.commit()
     return "ok"
 
