@@ -1,4 +1,5 @@
 import functools
+import json
 import uuid
 import io
 import sys
@@ -246,10 +247,23 @@ def backoffice_route(token, path):
         return jsonify([r[0] for r in data])
     return 500
 
+def save_file(cur, app_id, destination, size, sha1, blob_id):
+    cur.execute('''
+    insert into file(destination, size, hash, blob_id) 
+    values          (%s,          %s,   %s,   %s)
+    returning id
+    ''',
+                    (destination, size, sha1, blob_id))
+    file_id = cur.fetchone()[0]
+    cur.execute('insert into application_file(application_id, file_id) values (%s, %s)', (app_id, file_id))
+    print("{}  {}".format(file_id, destination))
+    return file_id
+
 
 @app.route('/create_repo', methods=['POST'])
 def create_repo():
     sizes = [250, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
+    shortname = request.json["shortname"]
     cur = conn.cursor()
 
     cur.execute("select id, path_prefix from clone_application((select application_id from application_template where template_type = 'maps_app'))")
@@ -257,19 +271,25 @@ def create_repo():
     created_app_row = cur.fetchone()
     app_id = created_app_row[0]
     path_prefix = created_app_row[1]
+    print("Created app id {}".format(app_id))
     for s in sizes:
         image_data = do_field(request.json, s)
-        blob_id = save_blob(cur, image_data)
-        sha1 = hashlib.sha1(image_data).hexdigest()
-        dest = "{}/{}/{}.png".format(path_prefix, request.json["shortname"], s)
-        cur.execute('''
-        insert into file(destination, size, hash, blob_id) 
-        values          (%s,          %s,   %s,   %s)
-        returning id
-        ''',
-                    (dest, len(image_data), sha1, blob_id))
-        file_id = cur.fetchone()[0]
-        cur.execute('insert into application_file(application_id, file_id) values (%s, %s)', (app_id, file_id))
+        save_file(cur,
+                  app_id = app_id,
+                  destination = "{}/{}/{}.png".format(path_prefix, shortname, s),
+                  size = len(image_data),
+                  sha1 = hashlib.sha1(image_data).hexdigest(),
+                  blob_id = save_blob(cur, image_data))
+
+    json_data = json.dumps(request.json)
+    print("Save json data")
+    print(json_data)
+    save_file(cur,
+              app_id = app_id,
+              destination = "{}/{}/{}.jsn".format(path_prefix, shortname, shortname),
+              size = len(json_data),
+              sha1 = hashlib.sha1(json_data).hexdigest(),
+              blob_id = save_blob(cur, json_data))
 
     cur.execute('insert into repository default values returning id')
     repo_id = cur.fetchone()[0]
@@ -308,7 +328,7 @@ def upload_file():
             return "no selected file"
         if file:
             with zipfile.ZipFile(file) as zip: 
-                path_prefix = os.path.commonprefix([zi.filename for zi in zip.infolist() if zi.filename[-1] != '/'])
+                path_prefix = os.path.commonprefix([zi.filename for zi in zip.infolist()])
                 print("Path prefix {}".format(path_prefix))
                 if path_prefix == "":
                     return "Zip file must have a non-empty path prefix"
