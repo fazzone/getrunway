@@ -192,24 +192,6 @@ def set_app_desc(cur, app_id, lang, desc):
                  values (%s,             %s,       %s)
     ''',                (app_id,         lang,     desc))
 
-# @app.route('/backoffice/<token>/blob_upload', methods=['GET','POST'])
-# def backoffice_blob_upload(token):
-#     cur = conn.cursor()
-#     cur.execute('select * from backoffice_token where id = %s', (token, ))
-#     if len(cur.fetchall()) == 0:
-#         return "unauthorized", 403
-#     if request.method == 'GET':
-#         return send_file('static/blob_upload.html')
-#     elif request.method == 'POST':
-#         if 'file' not in request.files:
-#             return "no file upload", 400
-#         f = request.files['file']
-#         if f is None or f.filename == '':
-#             return "no selected file", 400
-#         blob_id = save_blob(cur, f.read())
-#         conn.commit()
-#         return "Saved blob {}".format(blob_id)
-
 def backoffice_file_upload(request):
     cur = conn.cursor()
     if 'file' not in request.files:
@@ -337,7 +319,7 @@ def create_repo():
 
     save_file_and_blob(cur,
                        app_id = app_id,
-                       destination = "{}/{}/{}.jsn".format(path_prefix, shortname, shortname),
+                       destination = "{}/{}/field.jsn".format(path_prefix, shortname),
                        data = json.dumps(request.json, ensure_ascii=False).encode('utf8'))
 
     cur.execute('insert into repository default values returning id')
