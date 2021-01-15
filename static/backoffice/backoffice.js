@@ -43,8 +43,15 @@ function show_app_detail(app_id) {
                             .append($('<input type="button" class="table-button" value="Open">')
                                     .click(() => download_file('/file/'+f.id))
                                    )
-                            .append($('<input type="button" class="table-button" value="B">')));
-                
+                            .append(
+                                $('<details>')
+                                    .append($('<summary>').text("Replace"))
+                                    .append($('<form method="post" action="replace_file" enctype="multipart/form-data">')
+                                            .append($('<input name="file" type="file">'))
+                                            .append($('<input name="app_id" type="hidden">').val(app_id))
+                                            .append($('<input name="file_id" type="hidden">').val(f.id))
+                                            .append($('<input name="destination" type="hidden">').val(f.destination))
+                                            .append($('<input type="submit" value="replace">')))));
                 for (const k of file_keys) {
                     $tr.append($('<td>').text(f[k]));
                 }

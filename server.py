@@ -6,7 +6,7 @@ import sys
 import zipfile
 import hashlib
 import base64
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, redirect
 #from getrunway import do_field
 from metricrunway import do_field
 import os
@@ -192,61 +192,111 @@ def set_app_desc(cur, app_id, lang, desc):
                  values (%s,             %s,       %s)
     ''',                (app_id,         lang,     desc))
 
-@app.route('/backoffice/<token>/blob_upload', methods=['GET','POST'])
-def backoffice_blob_upload(token):
-    cur = conn.cursor()
-    cur.execute('select * from backoffice_token where id = %s', (token, ))
-    if len(cur.fetchall()) == 0:
-        return "unauthorized", 403
-    if request.method == 'GET':
-        return send_file('static/blob_upload.html')
-    elif request.method == 'POST':
-        if 'file' not in request.files:
-            return "no file upload", 400
-        f = request.files['file']
-        if f is None or f.filename == '':
-            return "no selected file", 400
-        blob_id = save_blob(cur, f.read())
-        conn.commit()
-        return "Saved blob {}".format(blob_id)
+# @app.route('/backoffice/<token>/blob_upload', methods=['GET','POST'])
+# def backoffice_blob_upload(token):
+#     cur = conn.cursor()
+#     cur.execute('select * from backoffice_token where id = %s', (token, ))
+#     if len(cur.fetchall()) == 0:
+#         return "unauthorized", 403
+#     if request.method == 'GET':
+#         return send_file('static/blob_upload.html')
+#     elif request.method == 'POST':
+#         if 'file' not in request.files:
+#             return "no file upload", 400
+#         f = request.files['file']
+#         if f is None or f.filename == '':
+#             return "no selected file", 400
+#         blob_id = save_blob(cur, f.read())
+#         conn.commit()
+#         return "Saved blob {}".format(blob_id)
 
-@app.route('/backoffice/<token>/<path>', methods=['GET','POST'])
-def backoffice_route(token, path):
+def backoffice_file_upload(request):
     cur = conn.cursor()
-    cur.execute('select * from backoffice_token where id = %s', (token, ))
-    is_auth = len(cur.fetchall()) > 0
+    if 'file' not in request.files:
+        return "no file uploaded", 400
+    f = request.files['file']
+    if f is None or f.filename == '':
+        return "no file selected", 400
+    if 'app_id' not in request.form:
+        return "no app_id", 400
+    if 'destination' not in request.form:
+        return "no destination", 400
+    save_file_and_blob(cur,
+                       app_id = request.form['app_id'],
+                       destination = request.form['destination'],
+                       data = f.read())
     conn.commit()
-    if not is_auth:
-        return "unauthorized", 403
-    if request.method == 'GET' and path in ['backoffice.js', 'backoffice.html']:
-        return send_file('static/backoffice/' + path)
-    if request.method == 'GET' and path == 'templates':
-        cur = conn.cursor()
-        cur.execute('select row_to_json(at) from application_template at')
-        data = cur.fetchall()
-        conn.commit()
-        return jsonify([r[0] for r in data])
-    if request.method == 'POST' and path == 'templates':
-        cur = conn.cursor()
-        try:
-            cur.execute('select update_application_templates(%s::jsonb)', (Json(request.json), ))
-            data = cur.fetchone()[0]
-            conn.commit()
-            return jsonify(data)
-        except psycopg2.Error as err:
-            print(err)
-            print(str(err))
-            conn.rollback()
-            return str(err), 500
+    return "ok", 200
+    
 
-    if request.method == 'GET' and path == 'all_apps':
+def check_backoffice_token(token):
+    try:
         cur = conn.cursor()
-        cur.execute('select row_to_json(a) from application a')
-        data = cur.fetchall()
-        conn.commit()
-        return jsonify([r[0] for r in data])
-    return 500
+        cur.execute('select * from backoffice_token where id = %s', (token, ))
+        return len(cur.fetchall()) > 0
+    except psycopg2.Error as err:
+        print(err)
+        conn.rollback()
+        return False
 
+@app.route('/backoffice/<token>/backoffice.js', methods=['GET'])
+def backoffice_js(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+    return send_file('static/backoffice/backoffice.js')
+
+@app.route('/backoffice/<token>/backoffice.html', methods=['GET'])
+def backoffice_html(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+    return send_file('static/backoffice/backoffice.html')
+
+@app.route('/backoffice/<token>/templates', methods=['GET'])
+def backoffice_templates_get(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+    cur = conn.cursor()
+    cur.execute('select row_to_json(at) from application_template at')
+    data = cur.fetchall()
+    conn.commit()
+    return jsonify([r[0] for r in data])
+
+@app.route('/backoffice/<token>/all_apps', methods=['GET'])
+def backoffice_all_apps(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+    cur = conn.cursor()
+    cur.execute('select row_to_json(a) from application a')
+    data = cur.fetchall()
+    conn.commit()
+    return jsonify([r[0] for r in data])
+
+@app.route('/backoffice/<token>/replace_file', methods=['POST'])
+def backoffice_replace_file(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+    cur = conn.cursor()
+    if 'file' not in request.files:
+        return "no file uploaded", 400
+    f = request.files['file']
+    if f is None or f.filename == '':
+        return "no file selected", 400
+    if 'app_id' not in request.form:
+        return "no app_id", 400
+    if 'destination' not in request.form:
+        return "no destination", 400
+    if 'file_id' not in request.form:
+        return "no file id", 400
+    app_id = request.form['app_id']
+    new_file_id = save_file_and_blob(cur,
+                                     app_id = app_id,
+                                     destination = request.form['destination'],
+                                     data = f.read())
+    old_file_id = request.form['file_id']
+    cur.execute('update application_file set file_id=%s where file_id=%s and application_id <> %s', (new_file_id, old_file_id, app_id))
+    conn.commit()
+    return "ok", 200
+    
 def save_file(cur, app_id, destination, size, sha1, blob_id):
     cur.execute('''
     insert into file(destination, size, hash, blob_id) 
@@ -259,6 +309,13 @@ def save_file(cur, app_id, destination, size, sha1, blob_id):
     print("{}  {}".format(file_id, destination))
     return file_id
 
+def save_file_and_blob(cur, app_id, destination, data):
+    return save_file(cur,
+                     app_id = app_id,
+                     destination = destination,
+                     size = len(data),
+                     sha1 = hashlib.sha1(data).hexdigest(),
+                     blob_id = save_blob(cur, data))
 
 @app.route('/create_repo', methods=['POST'])
 def create_repo():
@@ -273,23 +330,15 @@ def create_repo():
     path_prefix = created_app_row[1]
     print("Created app id {}".format(app_id))
     for s in sizes:
-        image_data = do_field(request.json, s)
-        save_file(cur,
-                  app_id = app_id,
-                  destination = "{}/{}/{}.png".format(path_prefix, shortname, s),
-                  size = len(image_data),
-                  sha1 = hashlib.sha1(image_data).hexdigest(),
-                  blob_id = save_blob(cur, image_data))
+        save_file_and_blob(cur,
+                           app_id = app_id,
+                           destination = "{}/{}/{}.png".format(path_prefix, shortname, s),
+                           data = do_field(request.json, s))
 
-    json_data = json.dumps(request.json, ensure_ascii=False).encode('utf8')
-    print("Save json data")
-    print(json_data)
-    save_file(cur,
-              app_id = app_id,
-              destination = "{}/{}/{}.jsn".format(path_prefix, shortname, shortname),
-              size = len(json_data),
-              sha1 = hashlib.sha1(json_data).hexdigest(),
-              blob_id = save_blob(cur, json_data))
+    save_file_and_blob(cur,
+                       app_id = app_id,
+                       destination = "{}/{}/{}.jsn".format(path_prefix, shortname, shortname),
+                       data = json.dumps(request.json, ensure_ascii=False).encode('utf8'))
 
     cur.execute('insert into repository default values returning id')
     repo_id = cur.fetchone()[0]
@@ -356,5 +405,5 @@ def upload_file():
         
 @app.route('/', methods=['GET'])
 def whatever():
-    return "ok"
+    return redirect(APP_BASE_URL + "/static/index.html", code=302)
 
