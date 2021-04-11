@@ -126,7 +126,7 @@ $(function() {
         url: "all_apps",
         dataType: 'json',
         success: function(resp) {
-            let keys = Object.keys(resp[0]);
+            let keys = ['repository_id', 'id', 'path_prefix', 'version', 'hw', 'previewIcon', 'releaseDate']
             let $ths = $('<tr>').append($('<th scope="col">').text('Select'));
             let $tbody = $('<tbody>');
             for (k of keys) {
@@ -135,7 +135,10 @@ $(function() {
             for (r of resp) {
                 let $tr = $('<tr>')
                     .append($('<td>')
-                            .append($('<input type="button" class="table-button" value="Select">').click(() => show_app_detail(r.id))));
+                            .append($('<input type="button" class="table-button" value="Select">').click(
+                                (function(app_id) { return () => show_app_detail(app_id); })(r.id)
+                                // () => show_app_detail(r.id)
+                            )));
                 for (k of keys) {
                     $tr.append($('<td>').text(r[k]));
                 }

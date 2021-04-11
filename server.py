@@ -84,6 +84,7 @@ def url_for_repo(repo_id):
 
 @app.route('/repo/<repo_id>/<ignored>', methods=['GET'])
 def get_repo(repo_id, ignored):
+    print("Repo id " + repr(repo_id))
     cur = conn.cursor()
     # cur.execute('SELECT json from apps_json_view where repository_id = %s', (repo_id, ))
     cur.execute('select * from get_apps_json(%s, %s)', (APP_BASE_URL, repo_id))
@@ -171,7 +172,6 @@ def get_app_route(app_id):
 from werkzeug.utils import secure_filename
 
 def create_application(cur, source, author, version, icon):
-    cur = conn.cursor()
     cur.execute('''
     insert into application(source, author, version, "previewIcon", "releaseDate")
     values                 (%s    , %s,     %s,      %s,            now())
@@ -248,10 +248,15 @@ def backoffice_all_apps(token):
     if not check_backoffice_token(token):
         return "no auth", 403
     cur = conn.cursor()
-    cur.execute('select row_to_json(a) from application a')
+    cur.execute('select ra.repository_id, row_to_json(a) from application a left join repository_application ra on a.id = ra.application_id')
     data = cur.fetchall()
     conn.commit()
-    return jsonify([r[0] for r in data])
+    rows = []
+    for r in data:
+        v = {'repository_id': r[0]}
+        v.update(r[1])
+        rows.append(v) 
+    return jsonify(rows)
 
 @app.route('/backoffice/<token>/replace_file', methods=['POST'])
 def backoffice_replace_file(token):
@@ -292,6 +297,7 @@ def save_file(cur, app_id, destination, size, sha1, blob_id):
     return file_id
 
 def save_file_and_blob(cur, app_id, destination, data):
+    print("SFAB", app_id, destination)
     return save_file(cur,
                      app_id = app_id,
                      destination = destination,
@@ -330,15 +336,22 @@ def create_repo():
     conn.commit()
     return url_for_repo(repo_id)
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
+# @app.route('/upload', methods=['POST'])
+@app.route('/backoffice/<token>/upload', methods=['POST'])
+def backoffice_upload_zip(token):
+    if not check_backoffice_token(token):
+        return "no auth", 403
+
     cur = conn.cursor()
 
+    print("Upload " + str(request.form))
+    print("Creating application")
     application_id = create_application(cur,
                                         source = "zip upload",
                                         author = request.form['author'],
                                         version = request.form['version'],
                                         icon = request.form['previewicon'])
+    print("Created application " + str(application_id))
 
     cur.execute('''
     insert into app_name(application_id, language, name)
@@ -359,15 +372,19 @@ def upload_file():
             return "no selected file"
         if file:
             with zipfile.ZipFile(file) as zip: 
+                for zif in zip.infolist():
+                    print(zif.filename)
                 path_prefix = os.path.commonprefix([zi.filename for zi in zip.infolist()])
-                print("Path prefix {}".format(path_prefix))
                 if path_prefix == "":
-                    return "Zip file must have a non-empty path prefix"
+                    msg = "Error: zip file must have a non-empty path prefix (must have a single top-level directory)<br>\n"
+                    msg += "<br>\n".join([zi.filename for zi in zip.infolist()])
+                    return msg
                 prefixlen = len(path_prefix)
                 cur.execute('update application set path_prefix = %s where id = %s', ('Apps/'+path_prefix, application_id))
                 for zi in zip.infolist():
                     if zi.filename[-1] != '/':
                         with zip.open(zi.filename, "r") as f:
+                            print("Insert blob " + str(zi.filename))
                             data = f.read()
                             cur.execute('insert into blob(data) values (%s) returning id', (psycopg2.Binary(data), ))
                             blob_id = cur.fetchone()[0]
@@ -380,9 +397,15 @@ def upload_file():
                             ('Apps/' + zi.filename, len(data), hashlib.sha1(data).hexdigest(), blob_id))
                             file_id = cur.fetchone()[0]
                             cur.execute('insert into application_file(application_id, file_id) values (%s, %s)', (application_id, file_id))
-    conn.commit()
-    return "ok"
-
+            # ins repo
+            cur.execute('insert into repository default values returning id')
+            repo_id = cur.fetchone()[0]
+            cur.execute('insert into repository_application(repository_id, application_id) values(%s, %s)', (repo_id, application_id))
+            conn.commit()
+            return """
+            Created application #{}.  <a href="{}">Link to repo #{} apps.json</a>.  Go back and refresh the page to see in list of apps
+            """.format(application_id, url_for_repo(repo_id), repo_id)
+    return "Not a POST"
 
         
 @app.route('/', methods=['GET'])

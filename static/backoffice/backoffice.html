@@ -10,6 +10,17 @@
   <body>
     <div class="app vflex">
 
+      <h3> Static Repo </h3>
+      <form method="post" action="upload" enctype="multipart/form-data">
+        <label> Zip file  <input name="file" type="file"> </label>
+        <label> Name  <input name="name" type="text"> </label>
+        <label> Description  <input name="description" type="text"> </label>
+        <label> Author  <input name="author" type="text"> </label>
+        <label> Version  <input name="version" type="text"> </label>
+        <label> Icon URL  <input name="previewicon" type="text" value="https://stark-savannah-19620.herokuapp.com/static/DFM.png"> </label>
+        <input type="submit" >
+      </form>
+
       <h3> App Templates </h3>
       <div id="templates-container">
         Loading templates...
